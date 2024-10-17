@@ -1,10 +1,12 @@
 import enum
+
 from sqlalchemy import create_engine, Column, String, ForeignKey, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 # --- Base for models ---
 Base = declarative_base()
+
 
 class User(Base):
     """
