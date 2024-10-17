@@ -1,56 +1,22 @@
-import enum
 import os
 import logging
-
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-
-from sqlalchemy import create_engine, Column, String, ForeignKey, Enum
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-
+from models import Base, User, ApplicationStatus, Application  # Import models from models.py
 
 # --- Настройки ---
-BOT_TOKEN = 'YOUR_BOT_TOKEN'  # Замените на ваш BOT_TOKEN
+BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
 # --- Подключение к PostgreSQL ---
-DB_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/mydatabase')  # Укажите корректный URL для PostgreSQL
+DB_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/mydatabase')
 engine = create_engine(DB_URL, echo=True)
-Base = declarative_base()
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
 
-
-class User(Base):
-    """
-    Модель пользователя.
-    """
-    __tablename__ = 'users'
-
-    id = Column(String, primary_key=True)  # Telegram ID пользователя тип str
-    name = Column(String, unique=True)
-    phone = Column(String)
-    email = Column(String)
-
-
-class ApplicationStatus(enum.Enum):
-    """
-    Модель статуса заявок (для администратора или оператора)
-    """
-    open = 'Открыта'
-    in_progress = 'В работе'
-    closed = 'Закрыта'
-
-
-class Application(Base):
-    """
-    Модель заявки для пользователей и администратора или оператора
-    """
-    __tablename__ = 'applications'
-
-    id = Column(String, primary_key=True)
-    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.open)
-    closed_by = Column(String, ForeignKey('users.name'))  # Внешний ключ на поле name из таблицы users
-    closed_by_user = relationship('User', backref='closed_applications')
 
 # --- Создание таблиц ---
 Base.metadata.create_all(engine)
