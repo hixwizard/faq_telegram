@@ -2,19 +2,24 @@ import os
 import logging
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from telegram.ext import (
+    Application, CommandHandler, CallbackQueryHandler,
+    MessageHandler, filters
+)
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from models import Base, User, ApplicationStatus, Application
+from .models import Base, User
 
 # --- Настройки ---
 BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
 # --- Подключение к PostgreSQL ---
-DB_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/mydatabase')
+DB_URL = os.getenv(
+    'DATABASE_URL', 'postgresql://user:password@localhost:5432/mydatabase'
+)
 engine = create_engine(DB_URL, echo=True)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
@@ -30,7 +35,10 @@ session = Session()
 user_data = {}
 
 # --- Логирование ---
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +51,10 @@ async def start(update: Update, context):
         [InlineKeyboardButton("Сохранить данные", callback_data='save_data')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text('Добро пожаловать! Выберите опцию:', reply_markup=reply_markup)
+    await update.message.reply_text(
+        'Добро пожаловать! Выберите опцию:',
+        reply_markup=reply_markup
+    )
 
 
 async def button(update: Update, context):
@@ -55,21 +66,34 @@ async def button(update: Update, context):
 
     if query.data == 'faq':
         faq_buttons = [
-            [InlineKeyboardButton("Контактная информация", callback_data='contact_info')],
+            [InlineKeyboardButton(
+                "Контактная информация",
+                callback_data='contact_info'
+            )],
             [InlineKeyboardButton("Адрес", callback_data='address')],
             [InlineKeyboardButton("Назад", callback_data='start')]
         ]
-        await query.edit_message_text(text='FAQ:', reply_markup=InlineKeyboardMarkup(faq_buttons))
+        await query.edit_message_text(
+            ext='FAQ:',
+            reply_markup=InlineKeyboardMarkup(faq_buttons)
+        )
     elif query.data == 'contact_info':
-        await query.edit_message_text(text='Наша контактная информация:\nТелефон: +123456789')
+        await query.edit_message_text(
+            text='Наша контактная информация:\nТелефон: +123456789'
+        )
     elif query.data == 'address':
         await query.edit_message_text(text='Наш адрес:\nул. Примерная, дом 1.')
     elif query.data == 'start':
         start_buttons = [
             [InlineKeyboardButton("FAQ", callback_data='faq')],
-            [InlineKeyboardButton("Сохранить данные", callback_data='save_data')]
+            [InlineKeyboardButton(
+                "Сохранить данные", callback_data='save_data'
+                )]
         ]
-        await query.edit_message_text(text='Добро пожаловать! Выберите опцию:', reply_markup=InlineKeyboardMarkup(start_buttons))
+        await query.edit_message_text(
+            text='Добро пожаловать! Выберите опцию:',
+            reply_markup=InlineKeyboardMarkup(start_buttons)
+        )
     elif query.data == 'save_data':
         user_data[query.from_user.id] = {}
         await query.message.reply_text('Введите ваше имя:')
@@ -100,12 +124,18 @@ async def handle_user_input(update: Update, context):
             try:
                 session.add(new_user)
                 session.commit()
-                await update.message.reply_text('Ваши данные успешно сохранены!')
+                await update.message.reply_text(
+                    'Ваши данные успешно сохранены!'
+                )
             except IntegrityError:
                 session.rollback()
-                await update.message.reply_text('Произошла ошибка при сохранении данных. Возможно, вы уже зарегистрированы.')
+                await update.message.reply_text(
+                    'Произошла ошибка при сохранении данных.'
+                    'Возможно, вы уже зарегистрированы.'
+                )
             finally:
                 del user_data[sender_id]
+
 
 def main():
     """
@@ -117,10 +147,14 @@ def main():
     # Регистрация обработчиков команд
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND,
+                       handle_user_input)
+                       )
 
     # Запуск бота
     application.run_polling()
+
 
 if __name__ == '__main__':
     main()

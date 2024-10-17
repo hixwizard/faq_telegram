@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import create_engine, Column, String, ForeignKey, Enum
+from sqlalchemy import Column, String, ForeignKey, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -20,7 +20,7 @@ class User(Base):
     email = Column(String)
 
 
-class ApplicationStatus(enum.Enum):
+class UserFormStatus(enum.Enum):
     """
     Модель статуса заявок.
     """
@@ -29,13 +29,13 @@ class ApplicationStatus(enum.Enum):
     closed = 'Закрыта'
 
 
-class Application(Base):
+class UserForm(Base):
     """
     Модель заявки.
     """
     __tablename__ = 'applications'
 
     id = Column(String, primary_key=True)
-    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.open)
-    closed_by = Column(String, ForeignKey('users.name'))  # Внешний ключ на поле name из таблицы users
+    status = Column(Enum(UserFormStatus), default=UserFormStatus.open)
+    closed_by = Column(String, ForeignKey('users.name'))
     closed_by_user = relationship('User', backref='closed_applications')
