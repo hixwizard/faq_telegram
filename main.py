@@ -1,11 +1,14 @@
 import os
 import logging
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-from models import Base, User, ApplicationStatus, Application  # Import models from models.py
+
+from models import Base, User, ApplicationStatus, Application
 
 # --- Настройки ---
 BOT_TOKEN = 'YOUR_BOT_TOKEN'
