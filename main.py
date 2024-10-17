@@ -17,7 +17,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)  # Telegram ID пользователя
+    id = Column(String, primary_key=True)  # Telegram ID пользователя тип str
     name = Column(String)
     phone = Column(String)
     email = Column(String)
