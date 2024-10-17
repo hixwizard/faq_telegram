@@ -1,38 +1,26 @@
 import os
 import logging
-
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
-    Application, CommandHandler, CallbackQueryHandler,
-    MessageHandler, filters
+    Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 )
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-
-from .models import Base, User
+from models import Base, User
 
 # --- Настройки ---
 BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
-# --- Подключение к PostgreSQL ---
 DB_URL = os.getenv(
     'DATABASE_URL', 'postgresql://user:password@localhost:5432/mydatabase'
 )
+
+# --- Подключение к базе данных ---
 engine = create_engine(DB_URL, echo=True)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
-
-
-# --- Создание таблиц ---
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# --- Хранилище данных пользователей во время ввода ---
-user_data = {}
 
 # --- Логирование ---
 logging.basicConfig(
@@ -40,6 +28,9 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# --- Хранилище данных пользователей ---
+user_data = {}
 
 
 async def start(update: Update, context):
@@ -67,15 +58,13 @@ async def button(update: Update, context):
     if query.data == 'faq':
         faq_buttons = [
             [InlineKeyboardButton(
-                "Контактная информация",
-                callback_data='contact_info'
-            )],
+                "Контактная информация", callback_data='contact_info'
+                )],
             [InlineKeyboardButton("Адрес", callback_data='address')],
             [InlineKeyboardButton("Назад", callback_data='start')]
         ]
         await query.edit_message_text(
-            ext='FAQ:',
-            reply_markup=InlineKeyboardMarkup(faq_buttons)
+            'FAQ:', reply_markup=InlineKeyboardMarkup(faq_buttons)
         )
     elif query.data == 'contact_info':
         await query.edit_message_text(
@@ -91,7 +80,7 @@ async def button(update: Update, context):
                 )]
         ]
         await query.edit_message_text(
-            text='Добро пожаловать! Выберите опцию:',
+            'Добро пожаловать! Выберите опцию:',
             reply_markup=InlineKeyboardMarkup(start_buttons)
         )
     elif query.data == 'save_data':
@@ -115,12 +104,10 @@ async def handle_user_input(update: Update, context):
         elif 'email' not in current_data:
             current_data['email'] = update.message.text
             # Сохранение данных в базу
-            new_user = User(
-                id=str(sender_id),
-                name=current_data['name'],
-                phone=current_data['phone'],
-                email=current_data['email']
-            )
+            new_user = User(id=str(sender_id),
+                            name=current_data['name'],
+                            phone=current_data['phone'],
+                            email=current_data['email'])
             try:
                 session.add(new_user)
                 session.commit()
@@ -130,9 +117,8 @@ async def handle_user_input(update: Update, context):
             except IntegrityError:
                 session.rollback()
                 await update.message.reply_text(
-                    'Произошла ошибка при сохранении данных.'
-                    'Возможно, вы уже зарегистрированы.'
-                )
+                   ('Произошла ошибка при сохранении данных.'
+                    'Возможно, вы уже зарегистрированы.'))
             finally:
                 del user_data[sender_id]
 
@@ -141,18 +127,14 @@ def main():
     """
     Основная функция запуска бота.
     """
-    # Создаем приложение
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Регистрация обработчиков команд
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND,
-                       handle_user_input)
-                       )
+    application.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND, handle_user_input)
+    )
 
-    # Запуск бота
     application.run_polling()
 
 
