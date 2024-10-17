@@ -1,9 +1,11 @@
 from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Application  # Import models from models.py
+
+from models import Base, User, Application
 
 # --- Настройки ---
 app = Flask(__name__)
