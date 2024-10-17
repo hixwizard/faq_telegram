@@ -1,12 +1,15 @@
+import enum
+import os
 import logging
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+
 from sqlalchemy import create_engine, Column, String, ForeignKey, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
-import enum
-import os
+
 
 # --- Настройки ---
 BOT_TOKEN = 'YOUR_BOT_TOKEN'  # Замените на ваш BOT_TOKEN
@@ -16,8 +19,11 @@ DB_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/my
 engine = create_engine(DB_URL, echo=True)
 Base = declarative_base()
 
-# --- Модель пользователя ---
+
 class User(Base):
+    """
+    Модель пользователя.
+    """
     __tablename__ = 'users'
 
     id = Column(String, primary_key=True)  # Telegram ID пользователя тип str
@@ -25,14 +31,20 @@ class User(Base):
     phone = Column(String)
     email = Column(String)
 
-# --- Enum для статуса заявки ---
+
 class ApplicationStatus(enum.Enum):
+    """
+    Модель статуса заявок (для администратора или оператора)
+    """
     open = 'Открыта'
     in_progress = 'В работе'
     closed = 'Закрыта'
 
-# --- Модель заявки ---
+
 class Application(Base):
+    """
+    Модель заявки для пользователей и администратора или оператора
+    """
     __tablename__ = 'applications'
 
     id = Column(String, primary_key=True)
@@ -52,8 +64,11 @@ user_data = {}
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- Обработчик команды /start ---
+
 async def start(update: Update, context):
+    """
+    Обработчик команды /start
+    """
     keyboard = [
         [InlineKeyboardButton("FAQ", callback_data='faq')],
         [InlineKeyboardButton("Сохранить данные", callback_data='save_data')]
@@ -61,8 +76,11 @@ async def start(update: Update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Добро пожаловать! Выберите опцию:', reply_markup=reply_markup)
 
-# --- Обработчик нажатий кнопок ---
+
 async def button(update: Update, context):
+    """
+    Обработчик нажатий кнопок
+    """
     query = update.callback_query
     await query.answer()
 
@@ -87,8 +105,11 @@ async def button(update: Update, context):
         user_data[query.from_user.id] = {}
         await query.message.reply_text('Введите ваше имя:')
 
-# --- Обработчик сообщений для ввода данных ---
+
 async def handle_user_input(update: Update, context):
+    """
+    Обработчик сообщений для ввода данных
+    """
     sender_id = update.message.from_user.id
     if sender_id in user_data:
         current_data = user_data[sender_id]
@@ -117,8 +138,10 @@ async def handle_user_input(update: Update, context):
             finally:
                 del user_data[sender_id]
 
-# --- Запуск бота ---
 def main():
+    """
+    Основная функция запуска бота.
+    """
     # Создаем приложение
     application = Application.builder().token(BOT_TOKEN).build()
 
