@@ -1,49 +1,65 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-import enum
 from datetime import datetime
+
+from sqlalchemy import (
+    Column, Integer, String, ForeignKey, DateTime, Enum, Boolean
+)
+from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
 
 
-class ApplicationStatus(enum.Enum):
-    OPEN = "open"
-    IN_PROGRESS = "in_progress"
-    CLOSED = "closed"
-
-
 class User(Base):
+    """Модель пользователя."""
     __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)  # ID из Telegram
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=True)
-    is_blocked = Column(Integer, default=False)
-    applications = relationship("ApplicationModel", back_populates="user")
+    role = Column(String, default='user')  # Роль: user, admin, operator
+    is_blocked = Column(Boolean, default=False)
+    applications = relationship("Application", back_populates="user")
 
 
-class ApplicationModel(Base):
+class Application(Base):
+    """Модель заявок клиента."""
     __tablename__ = 'applications'
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False)
+    status_id = Column(
+        Integer, ForeignKey('questions_status.id'), nullable=False
+    )
+    questions = Column(String, nullable=False)  # Ответы клиента на вопросы
     user = relationship("User", back_populates="applications")
-    business_type = Column(String, nullable=False)
-    current_restrictions = Column(String, nullable=False)
-    goals = Column(String, nullable=False)
-    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.OPEN)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+    status = relationship("QuestionsStatus", back_populates="applications")
 
 
-class ApplicationLog(Base):
-    __tablename__ = 'application_logs'
+class QuestionsStatus(Base):
+    """Модель статусов заявки."""
+    __tablename__ = 'questions_status'
+    id = Column(Integer, primary_key=True)
+    status = Column(
+        Enum('открыта', 'в работе', 'закрыта', name='status_enum'),
+        nullable=False
+    )
+    applications = relationship("Application", back_populates="status")
 
-    id = Column(Integer, primary_key=True, index=True)
-    application_id = Column(Integer, ForeignKey('applications.id'))
-    old_status = Column(Enum(ApplicationStatus))
-    new_status = Column(Enum(ApplicationStatus))
-    changed_by = Column(Integer, ForeignKey('users.id'))
-    changed_at = Column(DateTime, default=datetime.utcnow)
+
+class QuestionsCheckStatus(Base):
+    """Модель логов изменений статусов заявок."""
+    __tablename__ = 'questions_check_status'
+    id = Column(Integer, primary_key=True)
+    application_id = Column(
+        Integer, ForeignKey('applications.id'), nullable=False
+    )
+    modified_by = Column(String, ForeignKey('users.id'))  # Кто изменил
+    old_status = Column(String, nullable=False)
+    new_status = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+
+class Question(Base):
+    """Модель вопросов."""
+    __tablename__ = 'questions'
+    id = Column(Integer, primary_key=True)
+    number = Column(Integer, nullable=False)  # Порядок вопросов
+    question = Column(String, nullable=False)
