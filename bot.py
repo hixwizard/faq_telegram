@@ -14,7 +14,7 @@ async def process_application(update: Update, context: CallbackContext):
     # Можно использовать context для записи данных о пользователе
     # или для выполнения логики бота
     await update.message.reply_text(
-        f'Спасибо за ваш ответ, {user.first_name}.'
+        f'Спасибо за ваш ответ, {user.name}.'
         ' Мы начали формировать вашу заявку.'
     )
     # Логика сохранения заявки в базу данных и отправки уведомления админу.
