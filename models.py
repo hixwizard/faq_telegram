@@ -3,9 +3,12 @@ from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, DateTime, Enum, Boolean
 )
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy import func
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class User(Base):
@@ -15,7 +18,10 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=True)
-    role = Column(String, default='user')  # Роль: user, admin, operator
+    role = Column(
+        Enum('user', 'admin', 'operator', name='role_enum'),
+        default='user'
+    )  # Роль: user, admin, operator
     is_blocked = Column(Boolean, default=False)
     applications = relationship("Application", back_populates="user")
 
@@ -51,10 +57,10 @@ class QuestionsCheckStatus(Base):
     application_id = Column(
         Integer, ForeignKey('applications.id'), nullable=False
     )
-    modified_by = Column(String, ForeignKey('users.id'))  # Кто изменил
+    modified_by = Column(String, ForeignKey('user.id'))  # Кто изменил
     old_status = Column(String, nullable=False)
     new_status = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=func.now())
 
 
 class Question(Base):
