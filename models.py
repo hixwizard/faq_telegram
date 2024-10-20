@@ -8,11 +8,16 @@ from sqlalchemy import func
 
 
 class Base(DeclarativeBase):
+
+    """Базовый класс для моделей."""
+
     pass
 
 
 class User(Base):
+
     """Модель пользователя."""
+
     __tablename__ = 'users'
     id = Column(String, primary_key=True, index=True)  # ID из Telegram
     name = Column(String, nullable=False)
@@ -27,7 +32,9 @@ class User(Base):
 
 
 class Application(Base):
+
     """Модель заявок клиента."""
+
     __tablename__ = 'applications'
     id = Column(Integer, primary_key=True)
     user_id = Column(String, ForeignKey('users.id'), nullable=False)
@@ -40,7 +47,9 @@ class Application(Base):
 
 
 class QuestionsStatus(Base):
+
     """Модель статусов заявки."""
+
     __tablename__ = 'questions_status'
     id = Column(Integer, primary_key=True)
     status = Column(
@@ -51,7 +60,9 @@ class QuestionsStatus(Base):
 
 
 class QuestionsCheckStatus(Base):
+
     """Модель логов изменений статусов заявок."""
+
     __tablename__ = 'questions_check_status'
     id = Column(Integer, primary_key=True)
     application_id = Column(
@@ -64,7 +75,9 @@ class QuestionsCheckStatus(Base):
 
 
 class Question(Base):
+
     """Модель вопросов."""
+
     __tablename__ = 'questions'
     id = Column(Integer, primary_key=True)
     number = Column(Integer, nullable=False)  # Порядок вопросов
